@@ -111,50 +111,6 @@ function addQuote() {
   alert("New quote added successfully!");
 }
 
-// === IMPORT / EXPORT SECTION CREATION ===
-function createImportExportSection() {
-  const container = document.createElement('div');
-  container.id = 'importExportSection';
-  container.style.marginTop = '20px';
-  container.style.display = 'flex';
-  container.style.alignItems = 'center';
-  container.style.gap = '15px';
-
-  const heading = document.createElement('h3');
-  heading.textContent = 'Import / Export Quotes';
-  heading.style.marginRight = '15px';
-
-  // --- Export Button ---
-  const exportBtn = document.createElement('button');
-  exportBtn.textContent = 'Export Quotes (JSON)';
-  exportBtn.addEventListener('click', exportToJsonFile);
-
-  // --- Import Label ---
-  const importLabel = document.createElement('label');
-  importLabel.textContent = 'Import Quotes (JSON)';
-  importLabel.style.cursor = 'pointer';
-  importLabel.style.color = 'blue';
-  importLabel.style.textDecoration = 'underline';
-
-  // --- Hidden File Input ---
-  const importInput = document.createElement('input');
-  importInput.type = 'file';
-  importInput.accept = '.json';
-  importInput.style.display = 'none';
-  importInput.addEventListener('change', importFromJsonFile);
-
-  // Clicking the label triggers file input
-  importLabel.addEventListener('click', () => importInput.click());
-
-  // Append elements
-  container.appendChild(heading);
-  container.appendChild(exportBtn);
-  container.appendChild(importLabel);
-  container.appendChild(importInput);
-
-  document.body.appendChild(container);
-}
-
 // --- EXPORT QUOTES TO JSON ---
 function exportToJsonFile() {
   const jsonData = JSON.stringify(quotes, null, 2);
@@ -196,5 +152,4 @@ categorySelect.addEventListener("change", showRandomQuote);
 // Initialize everything
 populateCategories();
 createAddQuoteForm();
-createImportExportSection(); // 👈 Added this line
 showRandomQuote();

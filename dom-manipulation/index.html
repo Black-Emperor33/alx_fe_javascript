@@ -9,6 +9,26 @@
     <h1>Dynamic Quote Generator</h1>
     <div id="quoteDisplay"></div>
     <button id="newQuote">Show New Quote</button>
-    <script src="script.js"></script>
+    
+    <div id="importExportSection" style="margin-top: 20px; display: flex; align-items: center; gap: 15px;">
+  <h3 style="margin-right: 15px;">Import / Export Quotes</h3>
+
+  <!-- Export Quotes Button -->
+  <button onclick="exportToJsonFile()">Export Quotes (JSON)</button>
+
+  <!-- Import Quotes Input -->
+  <label for="importFile" style="cursor: pointer; color: blue; text-decoration: underline;">
+    Import Quotes (JSON)
+  </label>
+
+  <input
+    type="file"
+    id="importFile"
+    accept=".json"
+    onchange="importFromJsonFile(event)"
+    style="display: none;"
+  />
+</div>
+<script src="script.js"></script>
   </body>
   </html>
