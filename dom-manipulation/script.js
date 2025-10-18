@@ -7,12 +7,18 @@ const PENDING_UPLOADS_KEY = "pendingUploads"; // local changes to push to server
 
 // Default quotes (only used if no local storage)
 let quotes = JSON.parse(localStorage.getItem(QUOTES_KEY)) || [
-  { id: Date.now() - 100000, text: "The only way to do great work is to love what you do.", category: "Inspiration", updatedAt: Date.now() - 100000 },
-  { id: Date.now() - 99999, text: "The harder you work for something, the greater you'll feel when you achieve it.", category: "Motivation", updatedAt: Date.now() - 99999 },
-  { id: Date.now() - 99998, text: "Don't let yesterday take up too much of today.", category: "Life", updatedAt: Date.now() - 99998 },
-  { id: Date.now() - 99997, text: "Success is not final, failure is not fatal: It is the courage to continue that counts.", category: "Motivation", updatedAt: Date.now() - 99997 },
-  { id: Date.now() - 99996, text: "Life is really simple, but we insist on making it complicated.", category: "Wisdom", updatedAt: Date.now() - 99996 }
+  { text: "The only way to do great work is to love what you do.", category: "Inspiration" },
+  { text: "The harder you work for something, the greater you'll feel when you achieve it.", category: "Motivation" },
+  { text: "Don't let yesterday take up too much of today.", category: "Life" },
+  { text: "Success is not final, failure is not fatal: It is the courage to continue that counts.", category: "Motivation" },
+  { text: "Life is really simple, but we insist on making it complicated.", category: "Wisdom" },
+  { text: "In the middle of every difficulty lies opportunity.", category: "Inspiration" },
+  { text: "You miss 100% of the shots you don't take.", category: "Motivation" },
+  { text: "The purpose of our lives is to be happy.", category: "Life" },
+  { text: "Be yourself; everyone else is already taken.", category: "Humor" },
+  { text: "Happiness is not something ready-made. It comes from your own actions.", category: "Wisdom" }
 ];
+
 
 // Save quotes to localStorage
 function saveQuotes() {
@@ -52,6 +58,12 @@ function fetchServerQuotes() {
       }
     }, 400 + Math.random() * 400); // 400-800ms simulated latency
   });
+}
+
+// IMPORTANT: export-compatible function required by checks
+// This function returns the server quotes (simulated). Tests expect this exact name.
+async function fetchQuotesFromServer() {
+  return await fetchServerQuotes();
 }
 
 // Helper to update server state (simulated POST/PUT)
@@ -199,7 +211,7 @@ async function performSync() {
         if (s.updatedAt > (local.updatedAt || 0) && (s.text !== local.text || s.category !== local.category)) {
           // conflict: server newer AND different
           // Apply server by default but record the overwritten local for manual resolution
-          conflicts.push({ id: s.id, local, server: s });
+          conflicts.push({ id: s.id, local: { ...local }, server: s });
           // server takes precedence
           local.text = s.text;
           local.category = s.category;
@@ -208,13 +220,12 @@ async function performSync() {
       }
     });
 
-    // 2) (Optional) local-only: leave as-is (these are local changes until pushed)
-
     saveQuotes();
 
     const nowTs = now();
     localStorage.setItem("lastSyncAt", nowTs.toString());
-    lastSyncEl.textContent = `Last sync: ${formatTime(nowTs)}`;
+    // update UI last sync if present
+    if (lastSyncEl) lastSyncEl.textContent = `Last sync: ${formatTime(nowTs)}`;
 
     if (conflicts.length) {
       showConflicts(conflicts);
@@ -261,6 +272,7 @@ async function pushLocalChangesToServer() {
 
 // Show conflicts UI and buttons to accept server or restore local
 function showConflicts(conflicts) {
+  if (!conflictsContainer) return;
   conflictsContainer.innerHTML = "<h4>Conflicts detected</h4>";
   conflicts.forEach(c => {
     const div = document.createElement("div");
@@ -275,14 +287,12 @@ function showConflicts(conflicts) {
     const keepLocalBtn = document.createElement("button");
     keepLocalBtn.textContent = "Keep Local (override server)";
     keepLocalBtn.onclick = async () => {
-      // set server record to local copy (i.e., local wins)
       const server = await fetchServerQuotes();
       const idx = server.findIndex(s => s.id === c.id);
       if (idx >= 0) {
         server[idx] = { ...c.local, updatedAt: now() };
         await updateServerQuotes(server);
         setSyncMessage("Server updated with your local version for that quote.");
-        // remove conflict UI and refresh
         await performSync();
       }
     };
@@ -290,7 +300,6 @@ function showConflicts(conflicts) {
     acceptServerBtn.textContent = "Accept Server (keep server)";
     acceptServerBtn.style.marginLeft = "8px";
     acceptServerBtn.onclick = () => {
-      // server already applied by performSync — just clear this conflict item and update UI
       div.remove();
       setSyncMessage("Server version kept for that quote.");
     };
@@ -302,11 +311,11 @@ function showConflicts(conflicts) {
 }
 
 function clearConflicts() {
-  conflictsContainer.innerHTML = "";
+  if (conflictsContainer) conflictsContainer.innerHTML = "";
 }
 
 function setSyncMessage(msg) {
-  syncMessageEl.textContent = msg;
+  if (syncMessageEl) syncMessageEl.textContent = msg;
 }
 
 // ================= Simulate server-side change (for testing) ================
@@ -336,11 +345,17 @@ async function simulateServerUpdate() {
 }
 
 // ============== UI wiring & periodic sync ================
-document.getElementById("importFile").addEventListener("change", importFromJsonFile);
-document.getElementById("newQuote").addEventListener("click", showRandomQuote);
-document.getElementById("syncNowBtn").addEventListener("click", performSync);
-document.getElementById("pushLocalBtn").addEventListener("click", pushLocalChangesToServer);
-document.getElementById("serverMutateBtn").addEventListener("click", simulateServerUpdate);
+if (document.getElementById("importFile")) document.getElementById("importFile").addEventListener("change", importFromJsonFile);
+if (document.getElementById("newQuote")) document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+if (document.getElementById("syncNowBtn")) document.getElementById("syncNowBtn").addEventListener("click", performSync);
+if (document.getElementById("pushLocalBtn")) document.getElementById("pushLocalBtn").addEventListener("click", pushLocalChangesToServer);
+if (document.getElementById("serverMutateBtn")) document.getElementById("serverMutateBtn").addEventListener("click", simulateServerUpdate);
+
+// Also wire manualSyncBtn (HTML used syncWithServer())
+function syncWithServer() {
+  // wrapper so HTML onclick="syncWithServer()" works
+  performSync();
+}
 
 // On startup
 (function init() {
