@@ -129,12 +129,24 @@ async function postQuoteToServer(quote) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(quote),
     });
-
     const result = await response.json();
     console.log("Posted to server:", result);
   } catch (error) {
     console.error("Error posting to server:", error);
   }
+}
+
+// --- Sync Quotes (Fetch + Conflict Resolution) ---
+async function syncQuotes() {
+  console.log("Starting full data sync...");
+  await fetchQuotesFromServer();
+
+  // Optional: re-post one local quote to simulate syncing user data
+  if (quotes.length > 0) {
+    await postQuoteToServer(quotes[0]);
+  }
+
+  console.log("Sync complete!");
 }
 
 // ========== ADD NEW QUOTE ==========
@@ -164,6 +176,6 @@ categoryFilter.addEventListener("change", filterQuotes);
 window.onload = () => {
   populateCategories();
   showRandomQuote();
-  fetchQuotesFromServer(); // initial sync
-  setInterval(fetchQuotesFromServer, 60000); // auto sync every 60 seconds
+  syncQuotes(); // <-- Now runs full sync on page load
+  setInterval(syncQuotes, 60000); // Auto sync every 60 seconds
 };
