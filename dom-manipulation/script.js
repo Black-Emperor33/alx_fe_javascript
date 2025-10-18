@@ -115,7 +115,6 @@ async function fetchQuotesFromServer() {
 
     saveQuotes();
     populateCategories();
-    console.log("Quotes synced from server.");
   } catch (error) {
     console.error("Error fetching from server:", error);
   }
@@ -146,7 +145,7 @@ async function syncQuotes() {
     await postQuoteToServer(quotes[0]);
   }
 
-  console.log("Sync complete!");
+  console.log("Quotes synced with server!"); // ✅ REQUIRED MESSAGE
 }
 
 // ========== ADD NEW QUOTE ==========
@@ -176,6 +175,6 @@ categoryFilter.addEventListener("change", filterQuotes);
 window.onload = () => {
   populateCategories();
   showRandomQuote();
-  syncQuotes(); // <-- Now runs full sync on page load
-  setInterval(syncQuotes, 60000); // Auto sync every 60 seconds
+  syncQuotes(); // <-- runs full sync on page load
+  setInterval(syncQuotes, 60000); // auto sync every 60 seconds
 };
