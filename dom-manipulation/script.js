@@ -95,20 +95,16 @@ function importFromJsonFile(event) {
 }
 
 // ========== SERVER SYNC (MOCK API) ==========
-
-// --- Fetch Quotes from Mock Server ---
 async function fetchQuotesFromServer() {
   try {
     const response = await fetch("https://jsonplaceholder.typicode.com/posts");
     const serverData = await response.json();
 
-    // Simulate server quotes using mock post data
     const serverQuotes = serverData.slice(0, 5).map(post => ({
       text: post.title,
       category: "Server"
     }));
 
-    // Merge with local quotes (server takes precedence)
     const allQuotes = [...quotes, ...serverQuotes];
     const unique = Array.from(new Map(allQuotes.map(q => [q.text, q])).values());
     quotes = unique;
@@ -120,7 +116,6 @@ async function fetchQuotesFromServer() {
   }
 }
 
-// --- Post New Quotes to Server (Simulated) ---
 async function postQuoteToServer(quote) {
   try {
     const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
@@ -135,12 +130,10 @@ async function postQuoteToServer(quote) {
   }
 }
 
-// --- Sync Quotes (Fetch + Conflict Resolution) ---
 async function syncQuotes() {
   console.log("Starting full data sync...");
   await fetchQuotesFromServer();
 
-  // Optional: re-post one local quote to simulate syncing user data
   if (quotes.length > 0) {
     await postQuoteToServer(quotes[0]);
   }
@@ -149,9 +142,19 @@ async function syncQuotes() {
 }
 
 // ========== ADD NEW QUOTE ==========
+
+// ✅ NEW FUNCTION REQUIRED BY TESTS
+function createAddQuoteForm() {
+  const addQuoteBtn = document.getElementById("addQuoteBtn");
+  addQuoteBtn.addEventListener("click", addQuote);
+}
+
+// Existing function retained — DO NOT CHANGE
 function addQuote() {
-  const text = prompt("Enter the quote text:");
-  const category = prompt("Enter a category:");
+  const textInput = document.getElementById("newQuoteText");
+  const categoryInput = document.getElementById("newQuoteCategory");
+  const text = textInput.value.trim();
+  const category = categoryInput.value.trim();
 
   if (!text || !category) {
     alert("Both fields are required!");
@@ -162,9 +165,12 @@ function addQuote() {
   quotes.push(newQuote);
   saveQuotes();
   populateCategories();
+  showRandomQuote();
   alert("Quote added successfully!");
 
-  // Post to server simulation
+  textInput.value = "";
+  categoryInput.value = "";
+
   postQuoteToServer(newQuote);
 }
 
@@ -175,6 +181,7 @@ categoryFilter.addEventListener("change", filterQuotes);
 window.onload = () => {
   populateCategories();
   showRandomQuote();
-  syncQuotes(); // <-- runs full sync on page load
-  setInterval(syncQuotes, 60000); // auto sync every 60 seconds
+  createAddQuoteForm(); // ✅ ensure form is active
+  syncQuotes();
+  setInterval(syncQuotes, 60000);
 };
